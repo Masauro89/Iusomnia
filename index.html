@@ -975,36 +975,9 @@
     </footer>
 
     <script>
-        // Configuración de API Keys - Usando las mismas que funcionan en tu referencia
-        const ASSISTANT_API_KEY = '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';
-        const TRANSLATOR_API_KEY = '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';
-        const API_URL = 'https://openrouter.ai/api/v1/chat/completions';
-        const DEEPSEEK_MODEL = 'deepseek/deepseek-chat-v3.1:free';
-        
         // Variables globales
         let isSending = false;
         let extractedText = '';
-        
-        // Función para crear efecto de confeti
-        function createConfetti() {
-            const colors = ['#B38E5D', '#2C5282', '#38A169', '#ED8936'];
-            for (let i = 0; i < 50; i++) {
-                setTimeout(() => {
-                    const confetti = document.createElement('div');
-                    confetti.className = 'confetti';
-                    confetti.style.left = Math.random() * 100 + 'vw';
-                    confetti.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
-                    confetti.style.width = Math.random() * 10 + 5 + 'px';
-                    confetti.style.height = Math.random() * 10 + 5 + 'px';
-                    confetti.style.animationDuration = Math.random() * 3 + 2 + 's';
-                    document.body.appendChild(confetti);
-                    
-                    setTimeout(() => {
-                        confetti.remove();
-                    }, 5000);
-                }, i * 100);
-            }
-        }
         
         // Sistema prompt con reglas estrictas para el asistente
         const SYSTEM_PROMPT = `Eres un asistente jurídico especializado EXCLUSIVAMENTE en derecho argentino.
@@ -1027,25 +1000,27 @@ EJEMPLOS DE RESPUESTAS CORTAS:
 
 Mantener respuestas breves y al punto.`;
 
-        // Prompt para el traductor legal
-        const TRANSLATOR_PROMPT = `Eres un traductor especializado en textos legales. Tu tarea es:
-
-1. TRADUCIR el texto legal a un lenguaje coloquial y fácil de entender
-2. HACER UN RESUMEN breve de los puntos principales
-3. EXPLICAR en palabras simples cualquier término legal complejo
-4. MENCIONAR si algún concepto requiere explicación legal específica
-
-IMPORTANTE:
-- Usa un lenguaje claro y accesible para personas sin formación jurídica
-- Si es necesario mencionar un término legal, explícalo entre paréntesis
-- Estructura tu respuesta de manera clara y organizada
-- No uses jerga legal sin explicarla
-
-Formato de respuesta:
-- Comienza con un resumen breve
-- Luego la traducción completa
-- Finalmente, explica términos complejos si es necesario`;
-
+        // Función para crear efecto de confeti
+        function createConfetti() {
+            const colors = ['#B38E5D', '#2C5282', '#38A169', '#ED8936'];
+            for (let i = 0; i < 50; i++) {
+                setTimeout(() => {
+                    const confetti = document.createElement('div');
+                    confetti.className = 'confetti';
+                    confetti.style.left = Math.random() * 100 + 'vw';
+                    confetti.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+                    confetti.style.width = Math.random() * 10 + 5 + 'px';
+                    confetti.style.height = Math.random() * 10 + 5 + 'px';
+                    confetti.style.animationDuration = Math.random() * 3 + 2 + 's';
+                    document.body.appendChild(confetti);
+                    
+                    setTimeout(() => {
+                        confetti.remove();
+                    }, 5000);
+                }, i * 100);
+            }
+        }
+        
         // Navegación entre herramientas
         document.querySelectorAll('.nav-tab').forEach(button => {
             button.addEventListener('click', function() {
@@ -1113,28 +1088,15 @@ Formato de respuesta:
             try {
                 updateStatus('Buscando en códigos argentinos...', 'info');
 
-                const response = await fetch(API_URL, {
+                // Usar Netlify Function en lugar de API directa
+                const response = await fetch('/.netlify/functions/assistant', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${ASSISTANT_API_KEY}`,
-                        'HTTP-Referer': window.location.origin || 'https://localhost',
-                        'X-Title': 'Asistente Jurídico Argentino'
                     },
-                    body: JSON.stringify({
-                        model: DEEPSEEK_MODEL,
-                        messages: [
-                            {
-                                role: "system",
-                                content: SYSTEM_PROMPT
-                            },
-                            {
-                                role: 'user',
-                                content: message
-                            }
-                        ],
-                        max_tokens: 300,
-                        temperature: 0.3,
+                    body: JSON.stringify({ 
+                        message: message,
+                        systemPrompt: SYSTEM_PROMPT
                     })
                 });
 
@@ -1299,33 +1261,15 @@ Formato de respuesta:
                 progressBar.style.width = '50%';
                 
                 try {
-                    // Preparar el prompt para la traducción
-                    const prompt = `${TRANSLATOR_PROMPT}
-
-                    TEXTO LEGAL A TRADUCIR:
-                    "${text}"`;
-                    
-                    // Hacer la petición a la API de OpenRouter/DeepSeek
-                    const response = await fetch(API_URL, {
+                    // Usar Netlify Function en lugar de API directa
+                    const response = await fetch('/.netlify/functions/translator', {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
-                            'Authorization': `Bearer ${TRANSLATOR_API_KEY}`,
-                            'HTTP-Referer': window.location.href,
-                            'X-Title': 'Traductor Legal'
                         },
-                        body: JSON.stringify({
-                            model: DEEPSEEK_MODEL,
-                            messages: [
-                                {
-                                    role: 'user',
-                                    content: prompt
-                                }
-                            ],
-                            max_tokens: 2000
-                        })
+                        body: JSON.stringify({ text: text })
                     });
-                    
+
                     if (!response.ok) {
                         throw new Error(`Error en la API: ${response.status}`);
                     }
@@ -1349,7 +1293,7 @@ Formato de respuesta:
                 } catch (error) {
                     console.error('Error en la traducción:', error);
                     processingSection.style.display = 'none';
-                    translatedOutput.value = `Error en la traducción: ${error.message}. Verifica tu API Key e intenta nuevamente.`;
+                    translatedOutput.value = `Error en la traducción: ${error.message}. Intenta nuevamente.`;
                     translationResult.style.display = 'block';
                 }
             }
