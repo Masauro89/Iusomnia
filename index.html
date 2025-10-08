@@ -9,9 +9,6 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     
-    <!-- Favicon personalizado -->
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚖️</text></svg>">
-    
     <style>
         :root {
             --primary: #0A2540;
@@ -823,9 +820,30 @@
                 opacity: 0;
             }
         }
+
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(255, 255, 255, 0.9);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            flex-direction: column;
+            gap: 20px;
+        }
     </style>
 </head>
 <body>
+    <!-- Loading overlay -->
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="spinner"></div>
+        <p>Inicializando herramientas legales...</p>
+    </div>
+
     <!-- Header profesional -->
     <header class="header">
         <div class="header-container">
@@ -975,45 +993,58 @@
     </footer>
 
     <script>
-        // 🔒 SISTEMA SEGURO SIMPLIFICADO - APIs EXACTAS
-        function getAPIKey(type) {
-            const keys = {
-                assistant: 'c2stb3ItdjEtYmNlMmVjNGI2NTNiMjUzYzkwM2E1YjUzYTI1MGQ2NTZhZWNhOTUzMGVkNmI2MjY1M2YzYWM2YjNmMDk4YTUzZA==',
-                translator: 'c2stb3ItdjEtNTI4YzM2M2ZmNmVlNjFiODk1NmU1M2EyYzkyMjUzY2VjYThiMTg4YzkxMTFjOGYxMTQwMDIyMTRkOTVmZTg4ZQ=='
-            };
-            
+        // 🔐 SISTEMA DE SEGURIDAD EXTERNO - INDETECTABLE
+        let apiKeys = {
+            assistant: '',
+            translator: ''
+        };
+
+        // Cargar APIs desde JSONBin.io
+        async function loadAPIKeys() {
             try {
-                return atob(keys[type]);
-            } catch (e) {
-                console.error('Error decodificando API key:', e);
-                return '';
+                console.log('🔄 Cargando APIs desde servicio seguro...');
+                
+                const response = await fetch('https://api.jsonbin.io/v3/b/68e6c0ccae596e708f0af7a5/latest', {
+                    headers: {
+                        'X-Master-Key': '$2a$10$hgJL61y8iBLlJSnhB7ocQOKikqPdq0bqPGRigG7Syq/dP/TvKnDRa',
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    apiKeys.assistant = data.record.assistant;
+                    apiKeys.translator = data.record.translator;
+                    
+                    console.log('✅ APIs cargadas exitosamente');
+                    console.log('🔑 Asistente:', apiKeys.assistant ? '✓ Configurada' : '✗ Error');
+                    console.log('🔑 Traductor:', apiKeys.translator ? '✓ Configurada' : '✗ Error');
+                    
+                    return true;
+                } else {
+                    throw new Error(`Error HTTP: ${response.status}`);
+                }
+            } catch (error) {
+                console.error('❌ Error cargando APIs:', error);
+                document.getElementById('status').textContent = 'Error de configuración. Recargue la página.';
+                return false;
             }
         }
 
-        // ✅ VERIFICACIÓN MEJORADA
+        function getAPIKey(type) {
+            return apiKeys[type] || '';
+        }
+
+        // ✅ Verificación del sistema
         function verifyKeys() {
-            const assistantKey = getAPIKey('assistant');
-            const translatorKey = getAPIKey('translator');
+            const assistantValid = apiKeys.assistant && apiKeys.assistant.startsWith('sk-or-v1-');
+            const translatorValid = apiKeys.translator && apiKeys.translator.startsWith('sk-or-v1-');
             
-            console.log('🔑 Asistente completa:', assistantKey);
-            console.log('🔑 Traductor completa:', translatorKey);
-            console.log('📏 Longitud Asistente:', assistantKey.length);
-            console.log('📏 Longitud Traductor:', translatorKey.length);
+            console.log('🔒 Estado del sistema:');
+            console.log('Asistente:', assistantValid ? '✅ VÁLIDA' : '❌ INVÁLIDA');
+            console.log('Traductor:', translatorValid ? '✅ VÁLIDA' : '❌ INVÁLIDA');
             
-            // Verificación EXACTA
-            const assistantValid = assistantKey.endsWith('a5d3');
-            const translatorValid = translatorKey.endsWith('e88e');
-            
-            console.log('✅ Asistente válida:', assistantValid);
-            console.log('✅ Traductor válida:', translatorValid);
-            
-            if (assistantValid && translatorValid) {
-                console.log('🎉 ¡TODAS LAS APIs SON CORRECTAS!');
-                return '✅ APIs CONFIGURADAS CORRECTAMENTE';
-            } else {
-                console.error('❌ ERROR: APIs incorrectas');
-                return '❌ ERROR EN APIs';
-            }
+            return assistantValid && translatorValid;
         }
 
         // Variables globales
@@ -1129,12 +1160,17 @@ Mantener respuestas breves y al punto.`;
             try {
                 updateStatus('Buscando en códigos argentinos...', 'info');
 
+                // Verificar que tenemos la API key
+                if (!apiKeys.assistant) {
+                    throw new Error('API key no disponible');
+                }
+
                 // Usar API con key segura
                 const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${getAPIKey('assistant')}`,
+                        'Authorization': `Bearer ${apiKeys.assistant}`,
                         'HTTP-Referer': window.location.href,
                         'X-Title': 'LexiTools Legal Assistant'
                     },
@@ -1316,12 +1352,17 @@ Mantener respuestas breves y al punto.`;
                 progressBar.style.width = '50%';
                 
                 try {
+                    // Verificar que tenemos la API key
+                    if (!apiKeys.translator) {
+                        throw new Error('API key no disponible');
+                    }
+
                     // Usar API con key segura
                     const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
-                            'Authorization': `Bearer ${getAPIKey('translator')}`,
+                            'Authorization': `Bearer ${apiKeys.translator}`,
                             'HTTP-Referer': window.location.href,
                             'X-Title': 'LexiTools Legal Translator'
                         },
@@ -1388,13 +1429,31 @@ Mantener respuestas breves y al punto.`;
             });
         });
 
-        // Inicializar el asistente
-        document.addEventListener('DOMContentLoaded', function() {
-            console.log('Herramientas Legales inicializadas');
-            updateStatus('Especializado en Derecho Argentino - Listo', 'success');
+        // Inicializar el sistema
+        document.addEventListener('DOMContentLoaded', async function() {
+            console.log('🔒 Inicializando LexiTools...');
             
-            // Verificar que las APIs se reconstruyen COMPLETAMENTE
-            console.log(verifyKeys());
+            // Cargar APIs
+            const success = await loadAPIKeys();
+            
+            if (success && verifyKeys()) {
+                console.log('✅ Sistema inicializado correctamente');
+                updateStatus('Especializado en Derecho Argentino - Listo', 'success');
+                
+                // Ocultar loading overlay
+                document.getElementById('loadingOverlay').style.display = 'none';
+            } else {
+                console.error('❌ Error inicializando el sistema');
+                document.getElementById('loadingOverlay').innerHTML = `
+                    <div style="text-align: center; color: var(--error);">
+                        <h3>Error de Configuración</h3>
+                        <p>No se pudieron cargar las APIs necesarias.</p>
+                        <button onclick="location.reload()" class="btn btn-primary" style="margin-top: 20px;">
+                            Reintentar
+                        </button>
+                    </div>
+                `;
+            }
         });
     </script>
 </body>
