@@ -10,7 +10,7 @@ exports.handler = async function(event, context) {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'Authorization': `Bearer ${process.env.OPENROUTER_API_KEY}`,
+                'Authorization': `Bearer ${process.env.OPENROUTER_TRANSLATOR_KEY}`,
                 'HTTP-Referer': 'https://iusomnia.com', 
                 'X-Title': 'Traductor Legal'
             },
